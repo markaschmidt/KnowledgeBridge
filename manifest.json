@@ -1,7 +1,7 @@
 {
   "id": "obsidian-integrated",
   "name": "Knowledge Bridge",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "minAppVersion": "1.8.0",
   "description": "Workspace-scoped knowledge exchange with Cursor and VS Code.",
   "author": "Mark Schmidt",

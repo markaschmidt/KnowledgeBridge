@@ -1,6 +1,6 @@
 # Independent releases
 
-This repository owns **Knowledge Bridge** and version 0.4.0. It is one of three sibling repositories under `ObsidianLiths/KnowledgeBridge`: `obsidian-plugin`, `ide-extension` and `core`. Each has its own origin, main branch, CI and version tags. The ObsidianLiths hub records their commit pointers; it does not combine their histories.
+This repository owns **Knowledge Bridge** and version 0.5.0. It is one of three sibling repositories under `ObsidianLiths/KnowledgeBridge`: `obsidian-plugin`, `ide-extension` and `core`. Each has its own origin, main branch, CI and version tags. The ObsidianLiths hub records their commit pointers; it does not combine their histories.
 
 The shared core is an immutable commit-pinned archive dependency bundled into each consumer. Editing the core checkout never changes an installed consumer. Adopt a new core commit explicitly, regenerate the consumer lockfile, run its tests and make a separate consumer release. Keep schema version 1 compatibility or introduce an explicit migration before changing registry/profile contracts.
 

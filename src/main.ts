@@ -6,21 +6,34 @@ import {
   FileSystemAdapter,
   FuzzySuggestModal,
   TFile,
+  MarkdownView,
 } from 'obsidian';
 import type { App } from 'obsidian';
 import { randomUUID } from 'node:crypto';
 import { connectVault } from './connection.js';
 import type { Note } from '@knowledge-bridge/core';
+import { startVaultBridge } from './bridge.js';
 
 interface Settings {
   registryPath: string;
   profilePath: string;
+  editorWrites: boolean;
+  additionalRegistries: string;
 }
 export default class KnowledgeBridgePlugin extends Plugin {
-  settings: Settings = { registryPath: '', profilePath: '' };
+  settings: Settings = {
+    registryPath: '',
+    profilePath: '',
+    editorWrites: false,
+    additionalRegistries: '',
+  };
+  private bridge?: Awaited<ReturnType<typeof startVaultBridge>>;
   async onload(): Promise<void> {
     this.settings = { ...this.settings, ...(await this.loadData()) };
     this.addSettingTab(new KnowledgeBridgeSettings(this.app, this));
+    await this.restartBridge().catch(
+      (error) => new Notice(`Knowledge Bridge writes: ${error.message}`),
+    );
     const handle = (operation: () => Promise<void>) => {
       void operation().catch(
         (error) =>
@@ -82,6 +95,50 @@ export default class KnowledgeBridgePlugin extends Plugin {
           new NotePicker(this.app, neighbors).open();
         }),
     });
+  }
+  onunload(): void {
+    void this.bridge?.close().catch(() => {});
+  }
+  async restartBridge(): Promise<void> {
+    await this.bridge?.close();
+    this.bridge = undefined;
+    if (!this.settings.editorWrites) return;
+    const adapter = this.app.vault.adapter;
+    if (!(adapter instanceof FileSystemAdapter))
+      throw new Error('Desktop filesystem vault required');
+    const vault = this.app.vault;
+    this.bridge = await startVaultBridge(
+      adapter.getBasePath(),
+      () =>
+        this.settings.editorWrites
+          ? [this.settings.registryPath, ...this.settings.additionalRegistries.split(/\r?\n/)]
+              .map((p) => p.trim())
+              .filter(Boolean)
+          : [],
+      {
+        file: (path: string) => {
+          const file = vault.getAbstractFileByPath(path);
+          return file instanceof TFile ? file : null;
+        },
+        create: (path, text) => vault.create(path, text),
+        process: (file: TFile, transform) => vault.process(file, transform),
+        read: (file: TFile) => vault.read(file),
+        trash: (file: TFile, system) => vault.trash(file, system),
+        assertSaved: (path, expected) => {
+          for (const leaf of this.app.workspace.getLeavesOfType('markdown')) {
+            const view = leaf.view;
+            if (
+              view instanceof MarkdownView &&
+              view.file?.path === path &&
+              view.editor.getValue() !== expected
+            )
+              throw new Error(
+                'This note has unsaved editor changes. Save it in Obsidian, then review again.',
+              );
+          }
+        },
+      },
+    );
   }
   async connection() {
     if (!this.settings.registryPath || !this.settings.profilePath)
@@ -147,6 +204,34 @@ class KnowledgeBridgeSettings extends PluginSettingTab {
         text.setValue(this.plugin.settings.profilePath).onChange(async (value) => {
           this.plugin.settings.profilePath = value;
           await this.plugin.saveData(this.plugin.settings);
+        }),
+      );
+    new Setting(containerEl)
+      .setName('Additional editor registries')
+      .setDesc(
+        'One absolute registry path per line, for example the other editor’s registry. Only approved workspaces in these registries can write to this vault.',
+      )
+      .addTextArea((text) =>
+        text.setValue(this.plugin.settings.additionalRegistries).onChange(async (value) => {
+          this.plugin.settings.additionalRegistries = value;
+          await this.plugin.saveData(this.plugin.settings);
+        }),
+      );
+    new Setting(containerEl)
+      .setName('Enable editor writes')
+      .setDesc(
+        'Allow reviewed changes from connected editors. Each workspace must separately permit creation, editing, or deletion. Deleted notes go to this vault’s .trash folder.',
+      )
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.editorWrites).onChange(async (value) => {
+          this.plugin.settings.editorWrites = value;
+          await this.plugin.saveData(this.plugin.settings);
+          try {
+            await this.plugin.restartBridge();
+            new Notice(value ? 'Editor write bridge enabled' : 'Editor write bridge disabled');
+          } catch (error) {
+            new Notice(error instanceof Error ? error.message : 'Could not start write bridge');
+          }
         }),
       );
     new Setting(containerEl).setName('Validate connection').addButton((button) =>

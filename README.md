@@ -8,7 +8,7 @@ Download `main.js` and `manifest.json` from this repository's release and place 
 
 In Knowledge Bridge settings, enter the private registry and approved workspace profile paths shown by the editor extension. The Obsidian window follows that explicit profile; switching IDE windows does not change it automatically. Vault registration and workspace scopes remain in **Obsidian IDE Knowledge Bridge: Manage Vaults and Workspace**.
 
-Commands browse authorized notes, show scoped incoming/outgoing links from Obsidian's native graph, and capture selected text into an approved inbox. Capture refuses sealed or Rhen-denied source notes. This preview does not update existing notes or unlock Rhen.
+Commands browse authorized notes, show scoped incoming/outgoing links from Obsidian's native graph, and capture selected text into an approved inbox. Capture refuses sealed or Rhen-denied source notes. Version 0.5 adds the authenticated local write bridge: reviewed creation, revision-checked edits via Vault.process, and recoverable deletion via Vault.trash. Enable editor writes and connect each editor registry in settings; each workspace must separately grant the operation. See [setup, use and recovery](WRITES.md). The bridge never unlocks Rhen.
 
 ## Develop and release
 
