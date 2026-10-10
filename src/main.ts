@@ -8,20 +8,19 @@ import {
   TFile,
 } from 'obsidian';
 import type { App } from 'obsidian';
-import { realpath } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import { KnowledgeService, readRegistry } from '@obsidian-integrated/local-service';
-import type { Note } from '@obsidian-integrated/core';
+import { connectVault } from './connection.js';
+import type { Note } from '@knowledge-bridge/core';
 
 interface Settings {
   registryPath: string;
   profilePath: string;
 }
-export default class IntegratedPlugin extends Plugin {
+export default class KnowledgeBridgePlugin extends Plugin {
   settings: Settings = { registryPath: '', profilePath: '' };
   async onload(): Promise<void> {
     this.settings = { ...this.settings, ...(await this.loadData()) };
-    this.addSettingTab(new IntegratedSettings(this.app, this));
+    this.addSettingTab(new KnowledgeBridgeSettings(this.app, this));
     const handle = (operation: () => Promise<void>) => {
       void operation().catch(
         (error) =>
@@ -87,20 +86,16 @@ export default class IntegratedPlugin extends Plugin {
   async connection() {
     if (!this.settings.registryPath || !this.settings.profilePath)
       throw new Error(
-        'Connect a registry and approved workspace profile in Obsidian Integrated settings',
+        'Connect a registry and approved workspace profile in Knowledge Bridge settings',
       );
     const adapter = this.app.vault.adapter;
     if (!(adapter instanceof FileSystemAdapter))
       throw new Error('Desktop filesystem vault required');
-    const root = await realpath(adapter.getBasePath());
-    const registry = await readRegistry(this.settings.registryPath),
-      vault = registry.vaults.find((v) => v.root === root);
-    if (!vault)
-      throw new Error('Register this vault from the Cursor or VS Code extension settings');
-    return {
-      vaultId: vault.id,
-      service: new KnowledgeService(this.settings.registryPath, this.settings.profilePath),
-    };
+    return connectVault(
+      adapter.getBasePath(),
+      this.settings.registryPath,
+      this.settings.profilePath,
+    );
   }
 }
 class NotePicker extends FuzzySuggestModal<Note> {
@@ -122,17 +117,17 @@ class NotePicker extends FuzzySuggestModal<Note> {
     if (file instanceof TFile) void this.app.workspace.getLeaf(false).openFile(file);
   }
 }
-class IntegratedSettings extends PluginSettingTab {
+class KnowledgeBridgeSettings extends PluginSettingTab {
   constructor(
     app: App,
-    private plugin: IntegratedPlugin,
+    private plugin: KnowledgeBridgePlugin,
   ) {
     super(app, plugin);
   }
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl('h2', { text: 'Obsidian Integrated' });
+    containerEl.createEl('h2', { text: 'Knowledge Bridge' });
     containerEl.createEl('p', {
       text: 'Vault registration and workspace scopes are managed in the Cursor / VS Code extension. Select that same private registry and approved profile here. This plugin never unlocks Rhen notes.',
     });

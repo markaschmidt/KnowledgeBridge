@@ -1,13 +1,34 @@
 {
-  "name": "@obsidian-integrated/obsidian-plugin",
-  "version": "0.3.0",
+  "name": "knowledge-bridge",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@obsidian-integrated/core": "0.3.0",
-    "@obsidian-integrated/local-service": "0.3.0"
+    "@knowledge-bridge/core": "https://codeload.github.com/markaschmidt/KnowledgeBridgeCore/tar.gz/f70bcadb1af97050f3ff435d9d2c67e4423ec014"
   },
   "devDependencies": {
-    "obsidian": "^1.14.4"
+    "obsidian": "^1.14.4",
+    "@types/node": "^22.15.0",
+    "esbuild": "^0.28.2",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/markaschmidt/KnowledgeBridge.git"
+  },
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "check": "npm run typecheck && npm test && npm run build",
+    "package:plugin": "npm run check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   }
 }
