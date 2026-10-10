@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-integrated",
+  "name": "Obsidian Integrated",
+  "version": "0.1.0",
+  "minAppVersion": "1.8.0",
+  "description": "Workspace-scoped knowledge exchange with Cursor and VS Code.",
+  "author": "Mark Schmidt",
+  "authorUrl": "https://github.com/markaschmidt",
+  "isDesktopOnly": true
+}

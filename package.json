@@ -1,0 +1,13 @@
+{
+  "name": "@obsidian-integrated/obsidian-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@obsidian-integrated/core": "0.1.0",
+    "@obsidian-integrated/local-service": "0.1.0"
+  },
+  "devDependencies": {
+    "obsidian": "^1.14.4"
+  }
+}
